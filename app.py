@@ -65,13 +65,13 @@ def extract_tables():
     horodatage = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     nom_fichier = f"donnees-{horodatage}.xlsx"
     
-    # Définir le chemin du fichier
-    chemin_fichier = f"/mnt/data/{nom_fichier}"
+    # Utilisation du répertoire ./tmp (ou ./files)
+    chemin_fichier = f"./tmp/{nom_fichier}"
 
-    # Vérifier si le répertoire /mnt/data existe, sinon le créer
-    if not os.path.exists('/mnt/data'):
+    # Créer le répertoire ./tmp s'il n'existe pas
+    if not os.path.exists('./tmp'):
         try:
-            os.makedirs('/mnt/data')  # Créer le répertoire si nécessaire
+            os.makedirs('./tmp')  # Créer le répertoire si nécessaire
         except Exception as e:
             print(f"Erreur lors de la création du répertoire : {e}")
             return jsonify({"error": "Impossible de créer le répertoire pour enregistrer le fichier."}), 500
