@@ -79,6 +79,11 @@ def extract_tables():
         print(f"Erreur lors de l'exportation : {e}")
         return jsonify({"error": "Erreur lors de l'exportation des données."}), 500
 
+# Route d'accueil pour vérifier que le serveur fonctionne
+@app.route('/')
+def home():
+    return "Bienvenue à l'API Flask ! Utilisez l'endpoint '/extract-tables' avec une requête POST pour extraire des tables HTML."
+
 # Démarrer le serveur Flask
 if __name__ == '__main__':
     app.run(debug=True)
