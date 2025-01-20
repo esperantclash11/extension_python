@@ -1,5 +1,5 @@
 # Importer les bibliothèques nécessaires
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -40,10 +40,9 @@ def extraire_tables_html(html_content):
     
     return dataframes
 
-# Route principale pour extraire des tables et les exporter en Excel
+# Route pour extraire les tables et générer un fichier Excel
 @app.route('/extract-tables', methods=['POST'])
 def extract_tables():
-    # Récupérer les données JSON envoyées dans la requête POST
     data = request.get_json()
     url = data.get('url')
     
@@ -63,34 +62,20 @@ def extract_tables():
     # Générer le nom du fichier Excel avec horodatage
     horodatage = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     nom_fichier = f"donnees-{horodatage}.xlsx"
-    chemin_fichier = os.path.join("/tmp", nom_fichier)  # Utiliser /tmp sur Render
+    chemin_fichier = os.path.join('/mnt/data', nom_fichier)
 
     # Exporter les tables dans un fichier Excel
     try:
         with pd.ExcelWriter(chemin_fichier, engine='openpyxl') as writer:
             for idx, table in enumerate(tables):
                 table.to_excel(writer, sheet_name=f"Table_{idx+1}", index=False)
-        
-        return jsonify({
-            "message": "Les données ont été exportées avec succès.",
-            "file_path": chemin_fichier  # Inclure le chemin du fichier généré
-        }), 200
+
+        # Retourner le fichier pour téléchargement
+        return send_file(chemin_fichier, as_attachment=True, download_name=nom_fichier)
+    
     except Exception as e:
         print(f"Erreur lors de l'exportation : {e}")
-        return jsonify({"error": f"Erreur lors de l'exportation des données : {str(e)}"}), 500
+        return jsonify({"error": "Erreur lors de l'exportation des données."}), 500
 
-# Route pour télécharger le fichier généré
-@app.route('/download/<filename>', methods=['GET'])
-def download_file(filename):
-    file_path = os.path.join("/tmp", filename)
-    if os.path.exists(file_path):
-        return jsonify({
-            "message": "Téléchargement du fichier réussi.",
-            "download_link": f"{request.host_url}tmp/{filename}"
-        }), 200
-    else:
-        return jsonify({"error": "Fichier non trouvé."}), 404
-
-# Démarrer le serveur Flask
 if __name__ == '__main__':
     app.run(debug=True)
