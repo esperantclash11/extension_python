@@ -1,5 +1,5 @@
 # Importer les bibliothèques nécessaires
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -73,7 +73,7 @@ def extract_tables():
         
         return jsonify({
             "message": "Les données ont été exportées avec succès.",
-            "file_path": chemin_fichier  # Inclure le chemin du fichier généré
+            "file_name": nom_fichier  # Inclure le nom du fichier généré
         }), 200
     except Exception as e:
         print(f"Erreur lors de l'exportation : {e}")
@@ -84,10 +84,7 @@ def extract_tables():
 def download_file(filename):
     file_path = os.path.join("/tmp", filename)
     if os.path.exists(file_path):
-        return jsonify({
-            "message": "Téléchargement du fichier réussi.",
-            "download_link": f"{request.host_url}tmp/{filename}"
-        }), 200
+        return send_file(file_path, as_attachment=True, download_name=filename)
     else:
         return jsonify({"error": "Fichier non trouvé."}), 404
 
