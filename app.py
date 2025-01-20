@@ -65,9 +65,16 @@ def extract_tables():
     horodatage = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     nom_fichier = f"donnees-{horodatage}.xlsx"
     
-    # Pour rendre accessible le fichier dans le répertoire de Render, on utilise /mnt/data
+    # Définir le chemin du fichier
     chemin_fichier = f"/mnt/data/{nom_fichier}"
-    print(f"Chemin du fichier généré : {chemin_fichier}")
+
+    # Vérifier si le répertoire /mnt/data existe, sinon le créer
+    if not os.path.exists('/mnt/data'):
+        try:
+            os.makedirs('/mnt/data')  # Créer le répertoire si nécessaire
+        except Exception as e:
+            print(f"Erreur lors de la création du répertoire : {e}")
+            return jsonify({"error": "Impossible de créer le répertoire pour enregistrer le fichier."}), 500
 
     # Exporter les tables dans un fichier Excel
     try:
