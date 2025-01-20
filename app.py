@@ -67,6 +67,7 @@ def extract_tables():
     
     # Pour rendre accessible le fichier dans le répertoire de Render, on utilise /mnt/data
     chemin_fichier = f"/mnt/data/{nom_fichier}"
+    print(f"Chemin du fichier généré : {chemin_fichier}")
 
     # Exporter les tables dans un fichier Excel
     try:
@@ -81,7 +82,7 @@ def extract_tables():
 
     except Exception as e:
         print(f"Erreur lors de l'exportation : {e}")
-        return jsonify({"error": "Erreur lors de l'exportation des données."}), 500
+        return jsonify({"error": f"Erreur lors de l'exportation des données : {e}"}), 500
 
 # Page d'accueil pour tester si l'API est fonctionnelle
 @app.route('/')
