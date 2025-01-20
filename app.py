@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, send_file
+# Importer les bibliothèques nécessaires
+from flask import Flask, request, jsonify
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -15,10 +16,9 @@ def recuperer_page_html(url):
         if response.status_code == 200:
             return response.text
         else:
-            print(f"Erreur lors du téléchargement : HTTP {response.status_code}")
             return None
     except Exception as e:
-        print(f"Erreur lors du téléchargement de l'URL : {e}")
+        print(f"Erreur lors du téléchargement : {e}")
         return None
 
 # Fonction pour extraire les tables HTML et les convertir en DataFrames pandas
@@ -27,7 +27,6 @@ def extraire_tables_html(html_content):
     tables = soup.find_all('table')
     
     if not tables:
-        print("Aucune table trouvée.")
         return None  # Aucune table trouvée
 
     dataframes = []
@@ -36,7 +35,7 @@ def extraire_tables_html(html_content):
             df = pd.read_html(str(table))[0]  # Convertir la table HTML en DataFrame
             dataframes.append(df)
         except Exception as e:
-            print(f"Erreur lors de la conversion de la table : {e}")
+            print(f"Erreur lors de la conversion : {e}")
             continue
     
     return dataframes
@@ -64,34 +63,23 @@ def extract_tables():
     # Générer le nom du fichier Excel avec horodatage
     horodatage = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     nom_fichier = f"donnees-{horodatage}.xlsx"
-    
-    # Utilisation du répertoire ./tmp (ou ./files)
-    chemin_fichier = f"./tmp/{nom_fichier}"
-
-    # Créer le répertoire ./tmp s'il n'existe pas
-    if not os.path.exists('./tmp'):
-        try:
-            os.makedirs('./tmp')  # Créer le répertoire si nécessaire
-        except Exception as e:
-            print(f"Erreur lors de la création du répertoire : {e}")
-            return jsonify({"error": "Impossible de créer le répertoire pour enregistrer le fichier."}), 500
+    chemin_fichier = os.path.join(os.path.expanduser("~/Documents"), nom_fichier)
 
     # Exporter les tables dans un fichier Excel
     try:
-        print(f"Début de l'exportation vers le fichier Excel : {chemin_fichier}")
         with pd.ExcelWriter(chemin_fichier, engine='openpyxl') as writer:
             for idx, table in enumerate(tables):
-                print(f"Exportation de la table {idx+1}...")
                 table.to_excel(writer, sheet_name=f"Table_{idx+1}", index=False)
         
-        print(f"Exportation réussie : {chemin_fichier}")
-        return send_file(chemin_fichier, as_attachment=True, download_name=nom_fichier)
-
+        return jsonify({
+            "message": "Les données ont été exportées avec succès.",
+            "file_path": chemin_fichier
+        }), 200
     except Exception as e:
         print(f"Erreur lors de l'exportation : {e}")
-        return jsonify({"error": f"Erreur lors de l'exportation des données : {e}"}), 500
+        return jsonify({"error": "Erreur lors de l'exportation des données."}), 500
 
-# Page d'accueil pour tester si l'API est fonctionnelle
+# Route d'accueil pour vérifier que le serveur fonctionne
 @app.route('/')
 def home():
     return "Bienvenue à l'API Flask ! Utilisez l'endpoint '/extract-tables' avec une requête POST pour extraire des tables HTML."
