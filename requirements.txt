@@ -1,7 +1,5 @@
 Flask
 Flask-CORS
-selenium
-webdriver-manager
 gunicorn
 pandas
 requests
