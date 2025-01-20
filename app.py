@@ -4,9 +4,13 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import os
+from flask_cors import CORS  # Importer Flask-CORS
 
 # Créer une application Flask
 app = Flask(__name__)
+
+# Appliquer CORS à l'application entière pour permettre les requêtes de n'importe quel domaine
+CORS(app)  # Cela permet à n'importe quel domaine d'interagir avec cette API
 
 # Fonction pour télécharger le contenu HTML depuis une URL
 def recuperer_page_html(url):
@@ -75,9 +79,12 @@ def extract_tables():
                 table.to_excel(writer, sheet_name=f"Table_{idx+1}", index=False)
         
         print(f"Exportation réussie : {chemin_fichier}")
+
+        # Renvoi du chemin du fichier avec l'URL d'accès
+        download_url = f"{request.host_url}download/{nom_fichier}"
         return jsonify({
             "message": "Les données ont été exportées avec succès.",
-            "file_path": chemin_fichier  # Inclure le chemin du fichier généré
+            "download_link": download_url  # Inclure le lien du fichier généré
         }), 200
     except Exception as e:
         print(f"Erreur lors de l'exportation : {e}")
