@@ -1,4 +1,3 @@
-# Importer les bibliothèques nécessaires
 from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import requests
@@ -16,9 +15,10 @@ def recuperer_page_html(url):
         if response.status_code == 200:
             return response.text
         else:
+            print(f"Erreur lors du téléchargement : HTTP {response.status_code}")
             return None
     except Exception as e:
-        print(f"Erreur lors du téléchargement : {e}")
+        print(f"Erreur lors du téléchargement de l'URL : {e}")
         return None
 
 # Fonction pour extraire les tables HTML et les convertir en DataFrames pandas
@@ -27,6 +27,7 @@ def extraire_tables_html(html_content):
     tables = soup.find_all('table')
     
     if not tables:
+        print("Aucune table trouvée.")
         return None  # Aucune table trouvée
 
     dataframes = []
@@ -35,7 +36,7 @@ def extraire_tables_html(html_content):
             df = pd.read_html(str(table))[0]  # Convertir la table HTML en DataFrame
             dataframes.append(df)
         except Exception as e:
-            print(f"Erreur lors de la conversion : {e}")
+            print(f"Erreur lors de la conversion de la table : {e}")
             continue
     
     return dataframes
@@ -67,13 +68,16 @@ def extract_tables():
 
     # Exporter les tables dans un fichier Excel
     try:
+        print(f"Début de l'exportation vers le fichier Excel : {chemin_fichier}")
         with pd.ExcelWriter(chemin_fichier, engine='openpyxl') as writer:
             for idx, table in enumerate(tables):
+                print(f"Exportation de la table {idx+1}...")
                 table.to_excel(writer, sheet_name=f"Table_{idx+1}", index=False)
         
+        print(f"Exportation réussie : {chemin_fichier}")
         return jsonify({
             "message": "Les données ont été exportées avec succès.",
-            "file_name": nom_fichier  # Inclure le nom du fichier généré
+            "file_path": chemin_fichier  # Inclure le chemin du fichier généré
         }), 200
     except Exception as e:
         print(f"Erreur lors de l'exportation : {e}")
@@ -83,10 +87,19 @@ def extract_tables():
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
     file_path = os.path.join("/tmp", filename)
+    
+    # Vérifier si le fichier existe avant d'essayer de le télécharger
     if os.path.exists(file_path):
+        print(f"Le fichier existe : {file_path}")
         return send_file(file_path, as_attachment=True, download_name=filename)
     else:
+        print(f"Le fichier n'a pas été trouvé : {file_path}")
         return jsonify({"error": "Fichier non trouvé."}), 404
+
+# Page d'accueil pour tester si l'API est fonctionnelle
+@app.route('/')
+def home():
+    return "Bienvenue à l'API Flask ! Utilisez l'endpoint '/extract-tables' avec une requête POST pour extraire des tables HTML."
 
 # Démarrer le serveur Flask
 if __name__ == '__main__':
