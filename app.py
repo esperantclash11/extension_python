@@ -63,7 +63,7 @@ def extract_tables():
     # Générer le nom du fichier Excel avec horodatage
     horodatage = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     nom_fichier = f"donnees-{horodatage}.xlsx"
-    chemin_fichier = os.path.join(os.path.expanduser("~/Documents"), nom_fichier)
+    chemin_fichier = os.path.join("/tmp", nom_fichier)  # Utiliser /tmp sur Render
 
     # Exporter les tables dans un fichier Excel
     try:
@@ -73,16 +73,23 @@ def extract_tables():
         
         return jsonify({
             "message": "Les données ont été exportées avec succès.",
-            "file_path": chemin_fichier
+            "file_path": chemin_fichier  # Inclure le chemin du fichier généré
         }), 200
     except Exception as e:
         print(f"Erreur lors de l'exportation : {e}")
-        return jsonify({"error": "Erreur lors de l'exportation des données."}), 500
+        return jsonify({"error": f"Erreur lors de l'exportation des données : {str(e)}"}), 500
 
-# Route d'accueil pour vérifier que le serveur fonctionne
-@app.route('/')
-def home():
-    return "Bienvenue à l'API Flask ! Utilisez l'endpoint '/extract-tables' avec une requête POST pour extraire des tables HTML."
+# Route pour télécharger le fichier généré
+@app.route('/download/<filename>', methods=['GET'])
+def download_file(filename):
+    file_path = os.path.join("/tmp", filename)
+    if os.path.exists(file_path):
+        return jsonify({
+            "message": "Téléchargement du fichier réussi.",
+            "download_link": f"{request.host_url}tmp/{filename}"
+        }), 200
+    else:
+        return jsonify({"error": "Fichier non trouvé."}), 404
 
 # Démarrer le serveur Flask
 if __name__ == '__main__':
